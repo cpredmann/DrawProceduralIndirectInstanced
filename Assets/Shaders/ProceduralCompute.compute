@@ -1,18 +1,19 @@
-﻿#pragma kernel GenerateOutput
-
+﻿
 RWStructuredBuffer<float4> PositionBuffer;
 RWStructuredBuffer<float4> ColorBuffer;
 RWStructuredBuffer<float4> NormalBuffer;
 
 RWStructuredBuffer<int> IndexBuffer;
+RWStructuredBuffer<matrix> XformBuffer;
+
+int InstanceCount;
+
+#pragma kernel GenerateOutput
 
 [numthreads(1,1,1)]
 void GenerateOutput (uint3 id : SV_DispatchThreadID)
 {
   uint index = id.x;
-  ColorBuffer[id.x * 3] = float4(1.0f, 0.0f, 0.0f, 1.0f);
-  ColorBuffer[id.x * 3 + 1] = float4(0.0f, 1.0f, 0.0f, 1.0f);
-  ColorBuffer[id.x * 3 + 2] = float4(0.0f, 0.0f, 1.0f, 1.0f);
   
   NormalBuffer[id.x * 3] = float4(0.0f, 0.0f, 1.0f, 0.0f);
   NormalBuffer[id.x * 3 + 1] = float4(0.0f, 0.0f, 1.0f, 0.0f);
@@ -25,4 +26,26 @@ void GenerateOutput (uint3 id : SV_DispatchThreadID)
   IndexBuffer[id.x * 3 + 2] = id.x * 3;
   IndexBuffer[id.x * 3 + 1] = id.x * 3 + 1;
   IndexBuffer[id.x * 3 + 1] = id.x * 3 + 2;
+}
+
+#pragma kernel GenerateXforms
+
+[numthreads(1, 1, 1)]
+void GenerateXforms(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x;
+    XformBuffer[id.x] = matrix(1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, index,
+        0.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f);
+}
+
+#pragma kernel GenerateColors
+
+[numthreads(1, 1, 1)]
+void GenerateColors(uint3 id : SV_DispatchThreadID)
+{
+    uint index = id.x;
+    float val = index / (float)InstanceCount;
+    ColorBuffer[index] = float4(val, val, val, 1.0f);
 }

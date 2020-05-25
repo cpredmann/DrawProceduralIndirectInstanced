@@ -5,6 +5,7 @@ uniform StructuredBuffer<float4> ColorBuffer;
 uniform StructuredBuffer<float4> NormalBuffer;
 
 uniform StructuredBuffer<int> IndexBuffer;
+uniform StructuredBuffer<matrix> XformBuffer;
 
 struct Attributes
 {
@@ -12,9 +13,9 @@ struct Attributes
 	UNITY_VERTEX_INPUT_INSTANCE_ID
 };
 
-PackedVaryingsType ProceduralVertex(Attributes input)
+PackedVaryingsType ProceduralVertex(Attributes input, uint instanceID : SV_InstanceID)
 {
-	float4 vertex = PositionBuffer[input.vertexID];
+	float4 vertex = mul(XformBuffer[instanceID], PositionBuffer[input.vertexID]);
 	float3 position = vertex.xyz;
 	float3 normal = NormalBuffer[input.vertexID].xyz;
 
@@ -39,7 +40,7 @@ PackedVaryingsType ProceduralVertex(Attributes input)
     am.uv3 = 0;
 #endif
 #ifdef ATTRIBUTES_NEED_COLOR
-	am.color = ColorBuffer[input.vertexID];
+	am.color = ColorBuffer[instanceID];
 #endif
     UNITY_TRANSFER_INSTANCE_ID(input, am);
 
