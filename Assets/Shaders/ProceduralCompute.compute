@@ -119,19 +119,13 @@ void GenerateShape (uint3 id : SV_DispatchThreadID)
   if (currentLoop == 0 && currentSide == 0) {
     ShapePointBuffer[0] = float3(0.0f, 0.0f, 0.0f);
     ShapeNormalBuffer[0] = float3(0.0f, 0.0f, 1.0f);
-    int vertexCount = (TotalSides * TotalLoops * 6) - (3 * TotalSides);
-    if (TotalLoops == 1)
-    {
-      vertexCount = (3 * TotalSides);
-    }
-    IndirectArguments[0] = vertexCount;
+    IndirectArguments[0] = (TotalSides * TotalLoops * 6) - (3 * TotalSides);
     IndirectArguments[1] = InstanceCount;
     IndirectArguments[2] = 0;
     IndirectArguments[3] = 0;
-    return;
   }
 
-  float loopRadius = radiusIncrement * (currentLoop + 1) * ShapeRadius;
+  float loopRadius = radiusIncrement * (currentLoop + 1);
 
   uint currentPoint = currentLoop * TotalSides + currentSide + 1;
   

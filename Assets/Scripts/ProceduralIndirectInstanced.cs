@@ -71,7 +71,7 @@ public class ProceduralIndirectInstanced : MonoBehaviour
     computeShader.SetInt("InstanceCount", count);
     computeShader.SetInt("Triangles", triangles);
 
-    bounds = new Bounds(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(20.0f, 20.0f, 20.0f));
+    bounds = new Bounds(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(200.0f, 200.0f, 200.0f));
     computeShader.SetFloat("ShapeRadius", radius);
     computeShader.Dispatch(shapeKernel, loops, sides, 1);
   }
