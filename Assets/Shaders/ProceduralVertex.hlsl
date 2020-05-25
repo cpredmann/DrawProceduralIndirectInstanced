@@ -4,6 +4,10 @@ uniform StructuredBuffer<float4> PositionBuffer;
 uniform StructuredBuffer<float4> ColorBuffer;
 uniform StructuredBuffer<float4> NormalBuffer;
 
+uniform StructuredBuffer<int> ShapeIndexBuffer;
+uniform StructuredBuffer<float3> ShapePointBuffer;
+uniform StructuredBuffer<float3> ShapeNormalBuffer;
+
 uniform StructuredBuffer<int> IndexBuffer;
 uniform StructuredBuffer<matrix> XformBuffer;
 
@@ -15,9 +19,9 @@ struct Attributes
 
 PackedVaryingsType ProceduralVertex(Attributes input, uint instanceID : SV_InstanceID)
 {
-	float4 vertex = mul(XformBuffer[instanceID], PositionBuffer[input.vertexID]);
+	float4 vertex = mul(XformBuffer[instanceID], float4(ShapePointBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f));
 	float3 position = vertex.xyz;
-	float3 normal = NormalBuffer[input.vertexID].xyz;
+	float3 normal = ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]];
 
 	AttributesMesh am;
 	am.positionOS = position;

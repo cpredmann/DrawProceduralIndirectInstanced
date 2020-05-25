@@ -17,6 +17,7 @@ public class ProceduralIndirectInstanced : MonoBehaviour
 
   private ComputeBuffer shapeIndexBuffer;
   private ComputeBuffer shapePositionBuffer;
+  private ComputeBuffer shapeNormalBuffer;
 
   private int generateKernel;
   private int xformKernel;
@@ -47,7 +48,9 @@ public class ProceduralIndirectInstanced : MonoBehaviour
     xformBuffer = new ComputeBuffer(count, 16 * sizeof(float));
 
     shapePositionBuffer = new ComputeBuffer(sides * loops + 1, 3 * sizeof(float));
-    shapeIndexBuffer = new ComputeBuffer((sides * loops * 6) - (3 * sides), sizeof(uint));
+    shapeNormalBuffer = new ComputeBuffer(sides * loops + 1, 3 * sizeof(float));
+    shapeIndexBuffer = new ComputeBuffer((sides * loops * 6) - (3 * sides), sizeof(int));
+    Debug.Log($"Vertex Count: {shapeIndexBuffer.count}");
 
     generateKernel = computeShader.FindKernel("GenerateOutput");
     xformKernel = computeShader.FindKernel("GenerateXforms");
@@ -62,29 +65,33 @@ public class ProceduralIndirectInstanced : MonoBehaviour
     Shader.SetGlobalBuffer("IndirectArguments", indirectArgs);
     Shader.SetGlobalBuffer("ShapeIndexBuffer", shapeIndexBuffer);
     Shader.SetGlobalBuffer("ShapePointBuffer", shapePositionBuffer);
+    Shader.SetGlobalBuffer("ShapeNormalBuffer", shapeNormalBuffer);
     computeShader.SetInt("TotalLoops", loops);
     computeShader.SetInt("TotalSides", sides);
     computeShader.SetInt("InstanceCount", count);
     computeShader.SetInt("Triangles", triangles);
 
     bounds = new Bounds(new Vector3(0.0f, 0.0f, 0.0f), new Vector3(20.0f, 20.0f, 20.0f));
+    computeShader.SetFloat("ShapeRadius", radius);
+    computeShader.Dispatch(shapeKernel, loops, sides, 1);
   }
 
   void Update()
   {
-    computeShader.SetFloat("ShapeRadius", radius);
-    computeShader.Dispatch(shapeKernel, loops, sides, 1);
-    computeShader.Dispatch(generateKernel, triangles, 1, 1);
+    //computeShader.Dispatch(generateKernel, triangles, 1, 1);
     computeShader.Dispatch(xformKernel, count, 1, 1);
     computeShader.Dispatch(colorKernel, triangles, 1, 1);
     Graphics.DrawProceduralIndirect(proceduralMaterial, bounds, MeshTopology.Triangles, indirectArgs, 0, null, null, UnityEngine.Rendering.ShadowCastingMode.On, true);
 
-    int[] cid = new int[shapeIndexBuffer.count];
-    shapeIndexBuffer.GetData(cid);
-    Vector3[] pid = new Vector3[shapePositionBuffer.count];
-    shapePositionBuffer.GetData(pid);
-    _mesh.SetVertices(pid);
-    _mesh.SetIndices(cid, MeshTopology.Triangles, 0);
+    //int[] cid = new int[shapeIndexBuffer.count];
+    //shapeIndexBuffer.GetData(cid);
+    //Vector3[] pid = new Vector3[shapePositionBuffer.count];
+    //shapePositionBuffer.GetData(pid);
+    //Vector3[] nid = new Vector3[shapeNormalBuffer.count];
+    //shapeNormalBuffer.GetData(nid);
+    //_mesh.SetVertices(pid);
+    //_mesh.SetNormals(nid);
+    //_mesh.SetIndices(cid, MeshTopology.Triangles, 0);
   }
 
   private void OnDestroy()
@@ -96,6 +103,7 @@ public class ProceduralIndirectInstanced : MonoBehaviour
     indexBuffer.Dispose();
     xformBuffer.Dispose();
     shapePositionBuffer.Dispose();
+    shapeNormalBuffer.Dispose();
     shapeIndexBuffer.Dispose();
   }
 }
