@@ -1,75 +1,70 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel IndexKernel 
 
-RWStructuredBuffer<uint> indices;
-RWStructuredBuffer<float3> points;
+RWStructuredBuffer<int> ShapeIndexBuffer;
+RWStructuredBuffer<float3> ShapePointBuffer;
 
-int loops;
-int sides;
+int TotalLoops;
+int TotalSides;
 
 #define PI 3.14159
 
 [numthreads(1,1,1)]
 void IndexKernel (uint3 id : SV_DispatchThreadID)
 {
-  uint loop = id.x;
-  uint side = id.y;
-  int s = side + sides + 1;
+  uint currentLoop = id.x;
+  uint currentSide = id.y;
+  int s = currentSide + TotalSides + 1;
 
-  int hs = s - sides;
-  int offset = sides * (loop - 1);
-  int p0 = s + offset;
-  int p1 = p0 + 1;
-  int p3 = hs + offset;
-  int p2 = p3 + 1;
-  if (p1 > (sides * (loop + 1)))
-  {
-    p1 = (s - sides) + offset + 1;
-  }
-  if (p2 > (sides * loop))
-  {
-    p2 = (hs - sides) + offset + 1;
-  }
-  uint c = loop * sides + side;
+  int halfSide = s - TotalSides;
+  int loopOffset = TotalSides * (currentLoop - 1);
 
-  if (loop == 0) {
-      c *= 3;
-      indices[c] = 0;
-      indices[c + 1] = p0;
-      indices[c + 2] = p1;
+  uint p0 = s + loopOffset;
+  uint p1 = p0 + 1;
+  uint p3 = halfSide + loopOffset;
+  uint p2 = p3 + 1;
+
+  if (p1 > (TotalSides * (currentLoop + 1)))
+  {
+    p1 = (s - TotalSides) + loopOffset + 1;
+  }
+  if (p2 > (TotalSides * currentLoop))
+  {
+    p2 = (halfSide - TotalSides) + loopOffset + 1;
+  }
+  uint currentIndex = currentLoop * TotalSides + currentSide;
+
+  if (currentLoop == 0) {
+      currentIndex *= 3;
+      ShapeIndexBuffer[currentIndex] = 0;
+      ShapeIndexBuffer[currentIndex + 1] = p0;
+      ShapeIndexBuffer[currentIndex + 2] = p1;
   } else {
-      c *= 6;
-      c -= 3 * sides;
-      indices[c] = p0;
-      indices[c + 1] = p1;
-      indices[c + 2] = p2;
-      indices[c + 3] = p2;
-      indices[c + 4] = p3;
-      indices[c + 5] = p0;
-  }
-}
-
-
-#pragma kernel PointsKernel
-
-[numthreads(1,1,1)]
-void PointsKernel (uint3 id : SV_DispatchThreadID)
-{
-  uint loop = id.x;
-  uint side = id.y;
-  
-  float a = PI * 2.0f / sides;
-  float r = 1.0f / loops;
-
-  if (loop == 0 && side == 0) {
-    points[0] = float3(0.0f, 0.0f, 0.0f);
+      currentIndex *= 6;
+      currentIndex -= 3 * TotalSides;
+      ShapeIndexBuffer[currentIndex] = p0;
+      ShapeIndexBuffer[currentIndex + 1] = p1;
+      ShapeIndexBuffer[currentIndex + 2] = p2;
+      ShapeIndexBuffer[currentIndex + 3] = p2;
+      ShapeIndexBuffer[currentIndex + 4] = p3;
+      ShapeIndexBuffer[currentIndex + 5] = p0;
   }
 
-  float lrad = r * (loop + 1);
+  float angleIncrement = PI * 2.0f / TotalSides;
+  float radiusIncrement = 1.0f / TotalLoops;
 
-  int c = loop * sides + side + 1;
-  
+  if (currentLoop == 0 && currentSide == 0) {
+    ShapePointBuffer[0] = float3(0.0f, 0.0f, 0.0f);
+    return;
+  }
 
-  points[c] = float3(cos(side * a) * lrad, sin(side * a) * lrad, 0.0f);
+  float loopRadius = radiusIncrement * (currentLoop + 1);
+
+  uint currentPoint = currentLoop * TotalSides + currentSide + 1;
   
+  float xPosition = cos(currentSide * angleIncrement) * loopRadius;
+  float yPosition = sin(currentSide * angleIncrement) * loopRadius;
+
+  ShapePointBuffer[currentPoint] = float3(xPosition, yPosition,  -(pow(xPosition, 2) + pow(yPosition, 2)));
 }
+
