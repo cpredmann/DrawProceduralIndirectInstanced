@@ -1,7 +1,7 @@
 ﻿
-RWStructuredBuffer<float4> PositionBuffer;
+RWStructuredBuffer<float3> PositionBuffer;
 RWStructuredBuffer<float4> ColorBuffer;
-RWStructuredBuffer<float4> NormalBuffer;
+RWStructuredBuffer<float3> NormalBuffer;
 
 RWStructuredBuffer<int> IndexBuffer;
 RWStructuredBuffer<matrix> XformBuffer;
@@ -21,42 +21,38 @@ float ShapeRadius;
 
 #define PI 3.14159
 
-#pragma kernel GenerateOutput
-
-[numthreads(1,1,1)]
-void GenerateOutput (uint3 id : SV_DispatchThreadID)
-{
-  uint index = id.x;
-  if (index == 0) {
-    IndirectArguments[0] = Triangles * 3;
-    IndirectArguments[1] = InstanceCount;
-    IndirectArguments[2] = 0;
-    IndirectArguments[3] = 0;
-  }
-  
-  NormalBuffer[id.x * 3] = float4(0.0f, 0.0f, 1.0f, 0.0f);
-  NormalBuffer[id.x * 3 + 1] = float4(0.0f, 0.0f, 1.0f, 0.0f);
-  NormalBuffer[id.x * 3 + 2] = float4(0.0f, 0.0f, 1.0f, 0.0f);
-
-  PositionBuffer[id.x * 3] = float4(index, 0.0f, 0.0f, 1.0f);
-  PositionBuffer[id.x * 3 + 1] = float4(index + 1.0f, 0.0f, 0.0f, 1.0f);
-  PositionBuffer[id.x * 3 + 2] = float4(index, 1.0f, 0.0f, 1.0f);
-
-  IndexBuffer[id.x * 3 + 2] = id.x * 3;
-  IndexBuffer[id.x * 3 + 1] = id.x * 3 + 1;
-  IndexBuffer[id.x * 3 + 1] = id.x * 3 + 2;
-}
-
 #pragma kernel GenerateXforms
 
 [numthreads(1, 1, 1)]
 void GenerateXforms(uint3 id : SV_DispatchThreadID)
 {
     uint index = id.x;
-    XformBuffer[id.x] = matrix(1.0f, 0.0f, 0.0f, 0.0f,
-        0.0f, 1.0f, 0.0f, index * 2,
-        0.0f, 0.0f, 1.0f, 0.0f,
-        0.0f, 0.0f, 0.0f, 1.0f);
+	float3 pos = PositionBuffer[index];
+	float3 yDir = normalize(NormalBuffer[index]);
+	float3 zDir = normalize(cross(float3(1.0f, 0.0f, 0.0f), yDir));
+	float3 xDir = normalize(cross(zDir, yDir));
+
+	float3 xRot = xDir;
+	float3 yRot = yDir;
+	float3 zRot = zDir;
+
+	//float3 xRot = normalize(float3(xDir.x, yDir.x, zDir.x));
+	//float3 yRot = normalize(float3(xDir.y, yDir.y, zDir.y));
+	//float3 zRot = normalize(float3(xDir.z, yDir.z, zDir.z));
+
+    XformBuffer[id.x] = matrix(
+		xRot.x, yRot.x, zRot.x, pos.x,
+		xRot.y, yRot.y, zRot.y, pos.y,
+		xRot.z, yRot.z, zRot.z, pos.z,
+		0.0f,   0.0f,   0.0f,   1.0f
+	);
+
+    //XformBuffer[id.x] = matrix(
+	//	1.0f, 0.0f, 0.0f, pos.x,
+    //    0.0f, 1.0f, 0.0f, pos.y,
+    //    0.0f, 0.0f, 1.0f, pos.z,
+    //    0.0f, 0.0f, 0.0f, 1.0f
+	//);
 }
 
 #pragma kernel GenerateColors
@@ -65,8 +61,8 @@ void GenerateXforms(uint3 id : SV_DispatchThreadID)
 void GenerateColors(uint3 id : SV_DispatchThreadID)
 {
     uint index = id.x;
-    float val = index / (float)InstanceCount;
-    ColorBuffer[index] = float4(val, val, val, 1.0f);
+	float4 inputVal = ColorBuffer[index];
+    ColorBuffer[index] = float4(inputVal.x, inputVal.y, 1.0f, 1.0f);
 }
 
 #pragma kernel GenerateShape 
@@ -99,18 +95,18 @@ void GenerateShape (uint3 id : SV_DispatchThreadID)
 
   if (currentLoop == 0) {
       currentIndex *= 3;
-      ShapeIndexBuffer[currentIndex] = 0;
+      ShapeIndexBuffer[currentIndex] = p1;
       ShapeIndexBuffer[currentIndex + 1] = p0;
-      ShapeIndexBuffer[currentIndex + 2] = p1;
+      ShapeIndexBuffer[currentIndex + 2] = 0;
   } else {
       currentIndex *= 6;
       currentIndex -= 3 * TotalSides;
-      ShapeIndexBuffer[currentIndex] = p0;
+      ShapeIndexBuffer[currentIndex] = p2;
       ShapeIndexBuffer[currentIndex + 1] = p1;
-      ShapeIndexBuffer[currentIndex + 2] = p2;
-      ShapeIndexBuffer[currentIndex + 3] = p2;
+      ShapeIndexBuffer[currentIndex + 2] = p0;
+      ShapeIndexBuffer[currentIndex + 3] = p0;
       ShapeIndexBuffer[currentIndex + 4] = p3;
-      ShapeIndexBuffer[currentIndex + 5] = p0;
+      ShapeIndexBuffer[currentIndex + 5] = p2;
   }
 
   float angleIncrement = PI * 2.0f / TotalSides;
@@ -118,7 +114,7 @@ void GenerateShape (uint3 id : SV_DispatchThreadID)
 
   if (currentLoop == 0 && currentSide == 0) {
     ShapePointBuffer[0] = float3(0.0f, 0.0f, 0.0f);
-    ShapeNormalBuffer[0] = float3(0.0f, 0.0f, 1.0f);
+    ShapeNormalBuffer[0] = float3(0.0f, 1.0f, 0.0f);
     IndirectArguments[0] = (TotalSides * TotalLoops * 6) - (3 * TotalSides);
     IndirectArguments[1] = InstanceCount;
     IndirectArguments[2] = 0;
@@ -129,10 +125,10 @@ void GenerateShape (uint3 id : SV_DispatchThreadID)
 
   uint currentPoint = currentLoop * TotalSides + currentSide + 1;
   
-  float xPosition = cos(currentSide * angleIncrement) * loopRadius;
-  float yPosition = sin(currentSide * angleIncrement) * loopRadius;
+  float xPosition = sin(currentSide * angleIncrement) * loopRadius;
+  float zPosition = cos(currentSide * angleIncrement) * loopRadius;
 
-  ShapePointBuffer[currentPoint] = float3(xPosition, yPosition,  -(pow(xPosition, 2) + pow(yPosition, 2)));
-  ShapeNormalBuffer[currentPoint] = float3(0.0f, 0.0f, 1.0f);
+  ShapePointBuffer[currentPoint] = float3(xPosition, -(pow(xPosition, 2) + pow(zPosition, 2)), zPosition);
+  ShapeNormalBuffer[currentPoint] = float3(0.0f, 1.0f, 0.0f);
 }
 

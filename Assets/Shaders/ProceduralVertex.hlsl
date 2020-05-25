@@ -1,8 +1,4 @@
-﻿//float4x4 _LocalToWorld;
-
-uniform StructuredBuffer<float4> PositionBuffer;
-uniform StructuredBuffer<float4> ColorBuffer;
-uniform StructuredBuffer<float4> NormalBuffer;
+﻿uniform StructuredBuffer<float4> ColorBuffer;
 
 uniform StructuredBuffer<int> ShapeIndexBuffer;
 uniform StructuredBuffer<float3> ShapePointBuffer;
@@ -21,7 +17,8 @@ PackedVaryingsType ProceduralVertex(Attributes input, uint instanceID : SV_Insta
 {
 	float4 vertex = mul(XformBuffer[instanceID], float4(ShapePointBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f));
 	float3 position = vertex.xyz;
-	float3 normal = ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]];
+	//float3 normal = normalize(mul(XformBuffer[instanceID], float4(ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f)).xyz);
+	float3 normal = normalize(mul(XformBuffer[instanceID], ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]]));
 
 	AttributesMesh am;
 	am.positionOS = position;
