@@ -7,6 +7,18 @@ RWStructuredBuffer<int> IndexBuffer;
 RWStructuredBuffer<matrix> XformBuffer;
 
 int InstanceCount;
+int Triangles;
+
+RWStructuredBuffer<int> IndirectArguments;
+
+RWStructuredBuffer<int> ShapeIndexBuffer;
+RWStructuredBuffer<float3> ShapePointBuffer;
+
+int TotalLoops;
+int TotalSides;
+float ShapeRadius;
+
+#define PI 3.14159
 
 #pragma kernel GenerateOutput
 
@@ -14,6 +26,12 @@ int InstanceCount;
 void GenerateOutput (uint3 id : SV_DispatchThreadID)
 {
   uint index = id.x;
+  if (index == 0) {
+    IndirectArguments[0] = Triangles * 3;
+    IndirectArguments[1] = InstanceCount;
+    IndirectArguments[2] = 0;
+    IndirectArguments[3] = 0;
+  }
   
   NormalBuffer[id.x * 3] = float4(0.0f, 0.0f, 1.0f, 0.0f);
   NormalBuffer[id.x * 3 + 1] = float4(0.0f, 0.0f, 1.0f, 0.0f);
@@ -49,3 +67,66 @@ void GenerateColors(uint3 id : SV_DispatchThreadID)
     float val = index / (float)InstanceCount;
     ColorBuffer[index] = float4(val, val, val, 1.0f);
 }
+
+#pragma kernel GenerateShape 
+
+
+[numthreads(1,1,1)]
+void GenerateShape (uint3 id : SV_DispatchThreadID)
+{
+  uint currentLoop = id.x;
+  uint currentSide = id.y;
+  int s = currentSide + TotalSides + 1;
+
+  int halfSide = s - TotalSides;
+  int loopOffset = TotalSides * (currentLoop - 1);
+
+  uint p0 = s + loopOffset;
+  uint p1 = p0 + 1;
+  uint p3 = halfSide + loopOffset;
+  uint p2 = p3 + 1;
+
+  if (p1 > (TotalSides * (currentLoop + 1)))
+  {
+    p1 = (s - TotalSides) + loopOffset + 1;
+  }
+  if (p2 > (TotalSides * currentLoop))
+  {
+    p2 = (halfSide - TotalSides) + loopOffset + 1;
+  }
+  uint currentIndex = currentLoop * TotalSides + currentSide;
+
+  if (currentLoop == 0) {
+      currentIndex *= 3;
+      ShapeIndexBuffer[currentIndex] = 0;
+      ShapeIndexBuffer[currentIndex + 1] = p0;
+      ShapeIndexBuffer[currentIndex + 2] = p1;
+  } else {
+      currentIndex *= 6;
+      currentIndex -= 3 * TotalSides;
+      ShapeIndexBuffer[currentIndex] = p0;
+      ShapeIndexBuffer[currentIndex + 1] = p1;
+      ShapeIndexBuffer[currentIndex + 2] = p2;
+      ShapeIndexBuffer[currentIndex + 3] = p2;
+      ShapeIndexBuffer[currentIndex + 4] = p3;
+      ShapeIndexBuffer[currentIndex + 5] = p0;
+  }
+
+  float angleIncrement = PI * 2.0f / TotalSides;
+  float radiusIncrement = 1.0f / TotalLoops;
+
+  if (currentLoop == 0 && currentSide == 0) {
+    ShapePointBuffer[0] = float3(0.0f, 0.0f, 0.0f);
+    return;
+  }
+
+  float loopRadius = radiusIncrement * (currentLoop + 1) * ShapeRadius;
+
+  uint currentPoint = currentLoop * TotalSides + currentSide + 1;
+  
+  float xPosition = cos(currentSide * angleIncrement) * loopRadius;
+  float yPosition = sin(currentSide * angleIncrement) * loopRadius;
+
+  ShapePointBuffer[currentPoint] = float3(xPosition, yPosition,  -(pow(xPosition, 2) + pow(yPosition, 2)));
+}
+
