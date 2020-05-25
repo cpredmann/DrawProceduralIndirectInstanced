@@ -3,11 +3,9 @@ RWStructuredBuffer<float3> PositionBuffer;
 RWStructuredBuffer<float4> ColorBuffer;
 RWStructuredBuffer<float3> NormalBuffer;
 
-RWStructuredBuffer<int> IndexBuffer;
 RWStructuredBuffer<matrix> XformBuffer;
 
 int InstanceCount;
-int Triangles;
 
 RWStructuredBuffer<int> IndirectArguments;
 
@@ -18,6 +16,7 @@ RWStructuredBuffer<float3> ShapeNormalBuffer;
 int TotalLoops;
 int TotalSides;
 float ShapeRadius;
+float Flattening;
 
 #define PI 3.14159
 
@@ -32,27 +31,12 @@ void GenerateXforms(uint3 id : SV_DispatchThreadID)
 	float3 zDir = normalize(cross(float3(1.0f, 0.0f, 0.0f), yDir));
 	float3 xDir = normalize(cross(zDir, yDir));
 
-	float3 xRot = xDir;
-	float3 yRot = yDir;
-	float3 zRot = zDir;
-
-	//float3 xRot = normalize(float3(xDir.x, yDir.x, zDir.x));
-	//float3 yRot = normalize(float3(xDir.y, yDir.y, zDir.y));
-	//float3 zRot = normalize(float3(xDir.z, yDir.z, zDir.z));
-
     XformBuffer[id.x] = matrix(
-		xRot.x, yRot.x, zRot.x, pos.x,
-		xRot.y, yRot.y, zRot.y, pos.y,
-		xRot.z, yRot.z, zRot.z, pos.z,
+		xDir.x, yDir.x, zDir.x, pos.x,
+		xDir.y, yDir.y, zDir.y, pos.y,
+		xDir.z, yDir.z, zDir.z, pos.z,
 		0.0f,   0.0f,   0.0f,   1.0f
 	);
-
-    //XformBuffer[id.x] = matrix(
-	//	1.0f, 0.0f, 0.0f, pos.x,
-    //    0.0f, 1.0f, 0.0f, pos.y,
-    //    0.0f, 0.0f, 1.0f, pos.z,
-    //    0.0f, 0.0f, 0.0f, 1.0f
-	//);
 }
 
 #pragma kernel GenerateColors
@@ -127,8 +111,9 @@ void GenerateShape (uint3 id : SV_DispatchThreadID)
   
   float xPosition = sin(currentSide * angleIncrement) * loopRadius;
   float zPosition = cos(currentSide * angleIncrement) * loopRadius;
+  float yPosition = -(pow(xPosition, 2) + pow(zPosition, 2)) * ShapeRadius * Flattening;
 
-  ShapePointBuffer[currentPoint] = float3(xPosition, -(pow(xPosition, 2) + pow(zPosition, 2)), zPosition);
+  ShapePointBuffer[currentPoint] = float3(xPosition, yPosition, zPosition);
   ShapeNormalBuffer[currentPoint] = float3(0.0f, 1.0f, 0.0f);
 }
 

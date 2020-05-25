@@ -16,12 +16,10 @@ struct Attributes
 PackedVaryingsType ProceduralVertex(Attributes input, uint instanceID : SV_InstanceID)
 {
 	float4 vertex = mul(XformBuffer[instanceID], float4(ShapePointBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f));
-	float3 position = vertex.xyz;
-	//float3 normal = normalize(mul(XformBuffer[instanceID], float4(ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f)).xyz);
-	float3 normal = normalize(mul(XformBuffer[instanceID], ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]]));
+	float3 normal = normalize(mul(XformBuffer[instanceID], float4(ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f)).xyz);
 
 	AttributesMesh am;
-	am.positionOS = position;
+	am.positionOS = vertex.xyz;
 #ifdef ATTRIBUTES_NEED_NORMAL
     am.normalOS = normal;
 #endif
