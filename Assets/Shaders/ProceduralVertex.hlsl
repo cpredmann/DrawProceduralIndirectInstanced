@@ -16,7 +16,7 @@ struct Attributes
 PackedVaryingsType ProceduralVertex(Attributes input, uint instanceID : SV_InstanceID)
 {
 	float4 vertex = mul(XformBuffer[instanceID], float4(ShapePointBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f));
-	float3 normal = normalize(mul(XformBuffer[instanceID], float4(ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]], 1.0f)).xyz);
+	float3 normal = ShapeNormalBuffer[ShapeIndexBuffer[input.vertexID]];
 
 	AttributesMesh am;
 	am.positionOS = vertex.xyz;
