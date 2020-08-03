@@ -21,7 +21,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Procedural
-  m_Shader: {fileID: 4800000, guid: 256f6cb5369f944b5a57b6bf3490b77c, type: 3}
+  m_Shader: {fileID: 4800000, guid: f6752c9ccce998648bc9e6a75e1d8b34, type: 3}
   m_ShaderKeywords: _NORMALMAP_TANGENT_SPACE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
