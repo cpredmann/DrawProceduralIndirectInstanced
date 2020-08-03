@@ -8,7 +8,7 @@ struct Attributes
 
 PackedVaryingsType ProceduralVertex(Attributes input)
 {
-    float4 vertex = VertexBuffer[input.vertexID];	
+    float4 vertex = VertexBuffer[IndexBuffer[input.vertexID]];	
 
 	AttributesMesh am;
 	am.positionOS = vertex.xyz;

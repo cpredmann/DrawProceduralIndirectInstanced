@@ -17,15 +17,16 @@ public class ProceduralIndirect : MonoBehaviour
     void Start()
     {
          bounds = new Bounds(Vector3.zero, new Vector3(10.0f, 10.0f, 10.0f));
-         int[] indices = new[] {0, 1, 2};
+         int[] indices = new[] {0, 1, 2, 1, 3, 2};
          Vector4[] vertices = new[]
          {
              new Vector4(0.0f, 0.0f, 0.0f, 0.0f), 
              new Vector4(0.0f, 1.0f, 0.0f, 0.0f), 
              new Vector4(0.0f, 0.0f, 1.0f, 0.0f), 
+             new Vector4(0.0f, 1.0f, 1.0f, 0.0f), 
          };
-         indexBuffer = new ComputeBuffer(3, sizeof(int));
-         vertexBuffer = new ComputeBuffer(3, 4 * sizeof(float));
+         indexBuffer = new ComputeBuffer(6, sizeof(int));
+         vertexBuffer = new ComputeBuffer(4, 4 * sizeof(float));
          indexBuffer.SetData(indices);
          vertexBuffer.SetData(vertices);
          material.SetBuffer("IndexBuffer", indexBuffer);
@@ -36,14 +37,14 @@ public class ProceduralIndirect : MonoBehaviour
     void BuildCommandBuffer()
     {
         commandBuffer = new CommandBuffer() {name = "DrawProc"};
-        commandBuffer.DrawProcedural(Matrix4x4.identity, material, -1, MeshTopology.Triangles, 3, 1, null);
+        commandBuffer.DrawProcedural(Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1, null);
     }
 
 
     // Update is called once per frame
     void Update()
     {
-        Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, 3); 
+        Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, 6); 
         //Graphics.ExecuteCommandBuffer(commandBuffer); 
     }
 
