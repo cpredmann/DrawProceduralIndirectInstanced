@@ -6,9 +6,9 @@ struct Attributes
 	uint vertexID : SV_VertexID;
 };
 
-PackedVaryingsType ProceduralVertex(Attributes input)
+PackedVaryingsType ProceduralVertex(Attributes input, uint vertexID : SV_VertexID)
 {
-    float4 vertex = VertexBuffer[IndexBuffer[input.vertexID]];	
+    float4 vertex = VertexBuffer[vertexID];	
 
 	AttributesMesh am;
 	am.positionOS = vertex.xyz;
