@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 
+[ExecuteAlways]
 public class ProceduralIndirect : MonoBehaviour
 {
 
@@ -15,6 +16,7 @@ public class ProceduralIndirect : MonoBehaviour
     private GraphicsBuffer vertexBuffer;
     
     private CommandBuffer commandBuffer;
+    private Camera main;
     
     // Start is called before the first frame update
     void Start()
@@ -38,16 +40,19 @@ public class ProceduralIndirect : MonoBehaviour
          vertexBuffer.SetData(vertices);
          //material.SetBuffer("IndexBuffer", indexBuffer);
          //material.SetBuffer("VertexBuffer", vertexBuffer);
-         BuildCommandBuffer();
+         main = Camera.main;
+         //BuildCommandBuffer();
     }
 
     void BuildCommandBuffer()
     {
         commandBuffer = new CommandBuffer() {name = "DrawProc"};
         MaterialPropertyBlock block = new MaterialPropertyBlock();
-        block.SetBuffer("IndexBuffer", indexBuffer);
+        //block.SetBuffer("IndexBuffer", indexBuffer);
         block.SetBuffer("VertexBuffer", vertexBuffer);
-        commandBuffer.DrawProcedural(Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1, block);
+        //commandBuffer.DrawProcedural(Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1, block);
+        commandBuffer.DrawProcedural(indexBuffer, Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1, block);
+        //main.AddCommandBuffer(CameraEvent.BeforeGBuffer, commandBuffer);
     }
 
 
@@ -55,17 +60,14 @@ public class ProceduralIndirect : MonoBehaviour
     void Update()
     {
         MaterialPropertyBlock block = new MaterialPropertyBlock();
-        //block.SetBuffer("IndexBuffer", indexBuffer);
         block.SetBuffer("VertexBuffer", vertexBuffer);
-        //Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, 6, properties:block);
         Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, indexBuffer, 6, 1, properties:block);
-        //Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, 6); 
-        //Graphics.ExecuteCommandBuffer(commandBuffer); 
     }
 
     private void OnDestroy()
     {
         indexBuffer?.Dispose();
         vertexBuffer?.Dispose();
+        commandBuffer?.Dispose();
     }
 }

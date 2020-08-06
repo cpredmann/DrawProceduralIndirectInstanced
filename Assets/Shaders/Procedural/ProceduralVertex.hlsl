@@ -13,7 +13,7 @@ PackedVaryingsType ProceduralVertex(Attributes input, uint vertexID : SV_VertexI
 	AttributesMesh am;
 	am.positionOS = vertex.xyz;
 #ifdef ATTRIBUTES_NEED_NORMAL
-    am.normalOS = 0;
+    am.normalOS = float3(0.0f, 0.0f, 1.0f);
 #endif
 #ifdef ATTRIBUTES_NEED_TANGENT
     am.tangentOS = 0;
@@ -31,7 +31,7 @@ PackedVaryingsType ProceduralVertex(Attributes input, uint vertexID : SV_VertexI
     am.uv3 = 0;
 #endif
 #ifdef ATTRIBUTES_NEED_COLOR
-	am.color = 0;
+	am.color = 1;
 #endif
 
     VaryingsType varyingsType;
