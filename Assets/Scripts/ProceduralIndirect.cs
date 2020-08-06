@@ -19,7 +19,7 @@ public class ProceduralIndirect : MonoBehaviour
     private Camera main;
     
     // Start is called before the first frame update
-    void Start()
+    void OnEnable()
     {
          bounds = new Bounds(Vector3.zero, new Vector3(10.0f, 10.0f, 10.0f));
          int[] indices = new[] {0, 1, 2, 1, 3, 2};
@@ -40,32 +40,30 @@ public class ProceduralIndirect : MonoBehaviour
          vertexBuffer.SetData(vertices);
          //material.SetBuffer("IndexBuffer", indexBuffer);
          //material.SetBuffer("VertexBuffer", vertexBuffer);
-         main = Camera.main;
          //BuildCommandBuffer();
+         //var pipelineAsset = GraphicsSettings.renderPipelineAsset;
+         RenderPipelineManager.beginCameraRendering += DrawProc;
     }
 
     void BuildCommandBuffer()
     {
         commandBuffer = new CommandBuffer() {name = "DrawProc"};
-        MaterialPropertyBlock block = new MaterialPropertyBlock();
-        //block.SetBuffer("IndexBuffer", indexBuffer);
-        block.SetBuffer("VertexBuffer", vertexBuffer);
-        //commandBuffer.DrawProcedural(Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1, block);
-        commandBuffer.DrawProcedural(indexBuffer, Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1, block);
-        //main.AddCommandBuffer(CameraEvent.BeforeGBuffer, commandBuffer);
+        commandBuffer.DrawProcedural(indexBuffer, Matrix4x4.identity, material, -1, MeshTopology.Triangles, 6, 1);
     }
 
-
-    // Update is called once per frame
-    void Update()
+    void DrawProc(ScriptableRenderContext context, Camera camera)
     {
-        MaterialPropertyBlock block = new MaterialPropertyBlock();
-        block.SetBuffer("VertexBuffer", vertexBuffer);
-        Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, indexBuffer, 6, 1, properties:block);
+        if (camera.cameraType != CameraType.Reflection)
+        {
+            MaterialPropertyBlock block = new MaterialPropertyBlock();
+            block.SetBuffer("VertexBuffer", vertexBuffer);
+            Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, indexBuffer, 6, 1, properties: block);
+        }
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
+        RenderPipelineManager.beginCameraRendering -= DrawProc;
         indexBuffer?.Dispose();
         vertexBuffer?.Dispose();
         commandBuffer?.Dispose();
