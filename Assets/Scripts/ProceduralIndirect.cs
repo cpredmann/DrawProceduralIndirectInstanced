@@ -49,7 +49,7 @@ public class ProceduralIndirect : MonoBehaviour
         if (camera.cameraType != CameraType.Reflection)
         {
             MaterialPropertyBlock block = new MaterialPropertyBlock();
-            block.SetBuffer("VertexBuffer", vertexBuffer);
+            block.SetBuffer("PositionBuffer", vertexBuffer);
             Graphics.DrawProcedural(material, bounds, MeshTopology.Triangles, indexBuffer, 6, 1, properties: block);
         }
     }
