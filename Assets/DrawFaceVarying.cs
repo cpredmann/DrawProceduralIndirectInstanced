@@ -16,12 +16,13 @@ public class DrawFaceVarying : MonoBehaviour
     private MeshFilter m_MeshFilter;
     private Mesh m_Mesh;
 
-    public Material FacevaryingMaterial;
+    public Material[] FacevaryingMaterial;
 
     private GraphicsBuffer m_VertexIndexBuffer;
     private GraphicsBuffer m_PointsBuffer;
     private GraphicsBuffer m_UVBuffer;
     private GraphicsBuffer m_FacevaryingIndexBuffer;
+    private ComputeBuffer m_ArgsBuffer;
 
     private Bounds m_Bounds;
     private static readonly int IndexBuffer = Shader.PropertyToID("IndexBuffer");
@@ -177,15 +178,33 @@ public class DrawFaceVarying : MonoBehaviour
         m_UVBuffer.SetData(m_UVs);
         m_FacevaryingIndexBuffer.SetData(m_FaceVaryingIndices);
         
-        FacevaryingMaterial.SetBuffer(IndexBuffer, m_VertexIndexBuffer);
-        FacevaryingMaterial.SetBuffer(PositionBuffer, m_PointsBuffer);
-        FacevaryingMaterial.SetBuffer(UVBuffer, m_UVBuffer);
-        FacevaryingMaterial.SetBuffer(FacevaryingIndexBuffer, m_FacevaryingIndexBuffer);
+        Shader.SetGlobalBuffer(IndexBuffer, m_VertexIndexBuffer);
+        Shader.SetGlobalBuffer(PositionBuffer, m_PointsBuffer);
+        Shader.SetGlobalBuffer(UVBuffer, m_UVBuffer);
+        Shader.SetGlobalBuffer(FacevaryingIndexBuffer, m_FacevaryingIndexBuffer);
+        
+        //FacevaryingMaterial.SetBuffer(IndexBuffer, m_VertexIndexBuffer);
+        //FacevaryingMaterial.SetBuffer(PositionBuffer, m_PointsBuffer);
+        //FacevaryingMaterial.SetBuffer(UVBuffer, m_UVBuffer);
+        //FacevaryingMaterial.SetBuffer(FacevaryingIndexBuffer, m_FacevaryingIndexBuffer);
+        //
+        //SubmeshMaterial.SetBuffer(IndexBuffer, m_VertexIndexBuffer);
+        //SubmeshMaterial.SetBuffer(PositionBuffer, m_PointsBuffer);
+        //SubmeshMaterial.SetBuffer(UVBuffer, m_UVBuffer);
+        //SubmeshMaterial.SetBuffer(FacevaryingIndexBuffer, m_FacevaryingIndexBuffer);
 
         //m_Mesh.SetVertices(m_Points);
         //m_Mesh.SetIndices(m_Indices, MeshTopology.Quads, 0);
 
         RenderPipelineManager.beginCameraRendering += DrawCube;
+
+        m_ArgsBuffer = new ComputeBuffer(10, sizeof(Int32), ComputeBufferType.IndirectArguments);
+        var indirectArgs = new Int32[]
+        {
+            30, 1, 0, 0, 0,
+            6, 1, 30, 0, 0
+        };
+        m_ArgsBuffer.SetData(indirectArgs);
     }
 
     //private void Update()
@@ -200,13 +219,13 @@ public class DrawFaceVarying : MonoBehaviour
 
     void DrawCube(ScriptableRenderContext context, Camera camera)
     {
-        //MaterialPropertyBlock block = new MaterialPropertyBlock();
-        //block.SetBuffer("IndexBuffer", m_VertexIndexBuffer);
-        //block.SetBuffer("PositionBuffer", m_PointsBuffer);
-        //block.SetBuffer("UVBuffer", m_UVBuffer);
-        //block.SetBuffer("FacevaryingIndexBuffer", m_FacevaryingIndexBuffer);
-        Graphics.DrawProcedural(FacevaryingMaterial, m_Bounds, MeshTopology.Triangles, m_FacevaryingIndexBuffer, m_Indices.Count, 1);
-        //Graphics.DrawProcedural(FacevaryingMaterial, m_Bounds, MeshTopology.Quads, m_Indices.Count, 1, Camera.current);
+        //Graphics.DrawProcedural(FacevaryingMaterial, m_Bounds, MeshTopology.Triangles, m_FacevaryingIndexBuffer, m_Indices.Count, 1);
+        for (int i = 0; i < FacevaryingMaterial.Length; ++i)
+        {
+            Graphics.DrawProceduralIndirect(FacevaryingMaterial[i], m_Bounds, MeshTopology.Triangles,
+                m_FacevaryingIndexBuffer, m_ArgsBuffer, i * 5 * sizeof(Int32),
+                null, null, ShadowCastingMode.On, true, 0);
+        }
     }
 
     private void OnDisable()
@@ -216,5 +235,6 @@ public class DrawFaceVarying : MonoBehaviour
         m_PointsBuffer?.Dispose();
         m_UVBuffer?.Dispose();
         m_FacevaryingIndexBuffer?.Dispose();
+        m_ArgsBuffer?.Dispose();
     }
 }

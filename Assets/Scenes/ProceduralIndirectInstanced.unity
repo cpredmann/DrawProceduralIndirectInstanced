@@ -948,6 +948,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   FacevaryingMaterial: {fileID: 2100000, guid: 8da957054d3699d48b1b96eadf729081, type: 2}
+  SubmeshMaterial: {fileID: 2100000, guid: 49c15d0f887d4ed4ca0b630e7c3ea87a, type: 2}
 --- !u!4 &1035162211
 Transform:
   m_ObjectHideFlags: 0
